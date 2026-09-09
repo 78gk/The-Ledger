@@ -1,59 +1,75 @@
-# The Ledger — Weeks 9-10 Starter Code
+# The Ledger
 
-## Quick Start
+An event-sourced loan decision platform that models a real-world underwriting workflow end to end: document intake, credit analysis, fraud screening, compliance checks, human review, and final decision traceability.
+
+## Why this project matters
+
+Traditional lending workflows often struggle with auditability and reproducibility.  
+The Ledger addresses this by treating every domain action as an immutable event, making decisions replayable, explainable, and compliance-ready.
+
+## What it demonstrates
+
+- Event Sourcing + CQRS style architecture for financial decision systems
+- Immutable event streams with optimistic concurrency control
+- Projection daemon pattern for operational read models
+- Upcasting strategy for schema evolution across event versions
+- MCP tools/resources for lifecycle operations and observability
+- Realistic synthetic dataset generation (profiles, financial docs, events)
+
+## Architecture overview
+
+- **Streams**: application lifecycle, agent telemetry, compliance outcomes, audit trail
+- **Storage**: PostgreSQL-backed event store + projection checkpoints + outbox
+- **Agents**: document/credit/fraud/compliance/decision flow modeling
+- **Read Models**: application summary, agent performance, compliance audit views
+- **Interfaces**: MCP server tools/resources for controlled interaction
+
+![The Ledger Architecture](assets/mermaid-diagram-2026-03-22-010058.png)
+
+## Tech stack
+
+- Python (async-first patterns where needed)
+- PostgreSQL + `asyncpg`
+- Pydantic for typed event contracts
+- FastMCP for MCP server integration
+- Pytest + pytest-asyncio for validation
+
+## Project structure
+
+```text
+ledger/
+  agents/         # Agent behavior and orchestration primitives
+  domain/         # Aggregates and domain logic
+  schema/         # Typed event schemas and registry
+  projections/    # Read-model builders and daemon
+  mcp/            # MCP server, tools, and resources
+datagen/          # Synthetic companies, documents, and event history generator
+tests/            # Concurrency, projections, lifecycle, schema, and upcasting tests
+```
+
+## Quick start
+
 ```bash
-# 1. Install dependencies
+# 1) Install dependencies
 pip install -r requirements.txt
 
-# 2. Start PostgreSQL
-docker run -d -e POSTGRES_PASSWORD=apex -e POSTGRES_DB=apex_ledger -p 5432:5432 postgres:16
+# 2) Start PostgreSQL
+docker run -d --name the-ledger-db \
+  -e POSTGRES_PASSWORD=apex \
+  -e POSTGRES_DB=apex_ledger \
+  -p 5432:5432 postgres:16
 
-# 3. Set environment
-cp .env.example .env
-# Edit .env — add your ANTHROPIC_API_KEY
+# 3) Generate realistic seed data + events
+python datagen/generate_all.py --db-url postgresql://localhost/apex_ledger
 
-# 4. Generate all data (companies + documents + seed events → DB)
-python datagen/generate_all.py --db-url postgresql://postgres:apex@localhost/apex_ledger
-
-# 5. Validate schema (no DB needed)
-python datagen/generate_all.py --skip-db --skip-docs --validate-only
-
-# 6. Run Phase 0 tests (must pass before starting Phase 1)
-pytest tests/test_schema_and_generator.py -v
-
-# 7. Begin Phase 1: implement EventStore
-# Edit: ledger/event_store.py
-# Test: pytest tests/test_event_store.py -v
+# 4) Run tests
+pytest -q
 ```
 
-## What Works Out of the Box
-- Full event schema (45 event types) — `ledger/schema/events.py`
-- Complete data generator (GAAP PDFs, Excel, CSV, 1,200+ seed events)
-- Event simulator (all 5 agent pipelines, deterministic)
-- Schema validator (validates all events against EVENT_REGISTRY)
-- Phase 0 tests: 10/10 passing
+## Recruiter-ready highlights
 
-## What You Implement
-| Component | File | Phase |
-|-----------|------|-------|
-| EventStore | `ledger/event_store.py` | 1 |
-| ApplicantRegistryClient | `ledger/registry/client.py` | 1 |
-| Domain aggregates | `ledger/domain/aggregates/` | 2 |
-| DocumentProcessingAgent | `ledger/agents/base_agent.py` | 2 |
-| CreditAnalysisAgent | `ledger/agents/base_agent.py` | 2 (reference given) |
-| FraudDetectionAgent | `ledger/agents/base_agent.py` | 3 |
-| ComplianceAgent | `ledger/agents/base_agent.py` | 3 |
-| DecisionOrchestratorAgent | `ledger/agents/base_agent.py` | 3 |
-| Projections + daemon | `ledger/projections/` | 4 |
-| Upcasters | `ledger/upcasters.py` | 4 |
-| MCP server | `ledger/mcp_server.py` | 5 |
-
-## Gate Tests by Phase
-```bash
-pytest tests/test_schema_and_generator.py -v  # Phase 0: all must pass before Phase 1
-pytest tests/test_event_store.py -v           # Phase 1
-pytest tests/test_domain.py -v               # Phase 2
-pytest tests/test_narratives.py -v           # Phase 3: all 5 must pass
-pytest tests/test_projections.py -v          # Phase 4
-pytest tests/test_mcp.py -v                  # Phase 5
-```
+- Models a high-stakes, compliance-sensitive business domain
+- Applies production-grade backend patterns (event sourcing, OCC, projections, outbox)
+- Includes deterministic simulation data for repeatable testing and demos
+- Covers concurrency, lifecycle integrity, and schema evolution via tests
+- Built to explain both **technical rigor** and **business impact** in interviews
